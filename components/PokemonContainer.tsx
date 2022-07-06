@@ -39,6 +39,7 @@ const PokemonContainer = (item: PokemonDetails) => {
   const [backGroundTwo, setBackGroundTwo] = useState("grey");
   const [isClicked, setIsClicked] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [details, setDetails] = useState();
 
   useEffect(() => {
     switch (item.types[0].type.name) {
@@ -191,16 +192,18 @@ const PokemonContainer = (item: PokemonDetails) => {
   }, []);
 
   const handlePress = async () => {
+    let eData;
+    let json = [];
     modalVisible ? setModalVisible(false) : setModalVisible(true);
+    item.speciesInfo.evolves_from_species
+      ? (eData = await fetch(item.speciesInfo.evolution_chain.url))
+      : "";
+    eData ? (json = await eData.json()) : "";
+    setDetails(json);
   };
 
   return (
-    <TouchableOpacity
-      key={item.id}
-      onPress={() =>
-        modalVisible ? setModalVisible(false) : setModalVisible(true)
-      }
-    >
+    <TouchableOpacity key={item.id} onPress={handlePress}>
       <LinearGradient
         end={{ x: 0.8, y: 0.5 }}
         start={{ x: 0.2, y: 0.5 }}
@@ -216,12 +219,29 @@ const PokemonContainer = (item: PokemonDetails) => {
       >
         <View style={styles.pokemonTitle}>
           <Text style={styles.dex}>
-            #{item.id < 10 && "0"}
-            {item.id < 100 && "0"}
-            {item.id}
+            #{item.speciesInfo.id < 10 && "0"}
+            {item.speciesInfo.id < 100 && "0"}
+            {item.speciesInfo.id}
           </Text>
           <Text style={styles.pokemonName}>
-            {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+            {item.name.charAt(0).toUpperCase() +
+              item.name
+                .slice(1)
+                .replace("oran-m", "ran ♂")
+                .replace("oran-f", "ran	♀")
+                .replace("-average", "")
+                .replace("-normal", "")
+                .replace("-altered", "")
+                .replace("-standard", "")
+                .replace("-incarnate", "")
+                .replace("-ordinary", "")
+                .replace("-50", "")
+                .replace("-solo", "")
+                .replace("-amped", "")
+                .replace("-full-belly", "")
+                .replace("-single-strike", "")
+                .replace("-male", "")
+                .replace("-", " ")}
           </Text>
           <View
             style={{
@@ -251,6 +271,7 @@ const PokemonContainer = (item: PokemonDetails) => {
           />
         </TouchableOpacity>
       </LinearGradient>
+
       <Modal
         animationType="slide"
         transparent={true}

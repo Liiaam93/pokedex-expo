@@ -109,7 +109,9 @@ export interface PokemonDetails {
         front_shiny: string;
       };
     };
+    dex: number;
   };
+  varieties: Varieties[];
   stats: Stats[];
   types: Types[];
   weight: number;
@@ -128,10 +130,27 @@ interface Flavor {
   };
 }
 
+interface Varieties {
+  is_default: boolean;
+  pokemon: {
+    name: string;
+    url: string;
+  };
+}
+
 export interface SpeciesInfo {
   color: {
     name: string;
     url: string;
   };
   flavor_text_entries: Flavor[];
+  evolves_from_species: {
+    name: string;
+    url: string;
+  };
+  evolution_chain: {
+    url: string;
+  };
+  varieties: Varieties[];
+  id: number;
 }
