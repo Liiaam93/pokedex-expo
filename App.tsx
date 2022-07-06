@@ -4,8 +4,6 @@ import { StyleSheet, Text, View, FlatList, TextInput } from "react-native";
 import { Promise } from "bluebird";
 import { PokemonDetails, PokemonURLS, Pokemon, SpeciesInfo } from "./types";
 import PokemonContainer from "./components/PokemonContainer";
-import { __ } from "lodash";
-import _ from "lodash";
 const POKEMON_LIMIT = 12;
 
 export default function App() {
