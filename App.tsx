@@ -4,24 +4,37 @@ import { StyleSheet, Text, View, FlatList, TextInput } from "react-native";
 import { Promise } from "bluebird";
 import { PokemonDetails, PokemonURLS, Pokemon, SpeciesInfo } from "./types";
 import PokemonContainer from "./components/PokemonContainer";
-const POKEMON_LIMIT = 12;
+import { fetchPoke } from "./api";
+const POKEMON_LIMIT = 10;
 
 export default function App() {
-  const [firstGenPokemonDetails, setfirstGenPokemonDetails] =
-    useState<PokemonDetails[]>();
+  const [pokemonDetails, setPokemonDetails] = useState<PokemonDetails[]>();
   const [loading, setLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filtered, setFiltered] = useState<PokemonDetails[]>();
   const [currentOffset, setCurrentOffset] = useState(0);
+  const [offset, setOffset] = useState(0);
+
+  // useEffect(() => {
+  //   if (currentOffset > 1100) {
+  //     return;
+  //   }
+  //   let full: PokemonDetails[] = [];
+  //   const data = fetchPoke(offset);
+  //   data.map((d) => {
+  //     full.push(d);
+  //   });
+  //   console.log(full[0]);
+  //   setOffset((prevState) => prevState + POKEMON_LIMIT);
+  // }, [currentOffset]);
 
   useEffect(() => {
     if (currentOffset > 1100) {
       setLoading(false);
       return;
     }
-
     setLoading(true);
-    const fetchFirstGenPokemons = async () => {
+    const fetchPokemon = async () => {
       const pokemonResponse = await fetch(
         `https://pokeapi.co/api/v2/pokemon?limit=${POKEMON_LIMIT}&offset=${currentOffset}`
       );
@@ -29,18 +42,18 @@ export default function App() {
       const pokemonDetails: PokemonDetails[] = await Promise.map(
         pokeJSON.results,
         async (f: PokemonURLS) => (await fetch(f.url)).json(),
-        { concurrency: 5 }
+        { concurrency: 12 }
       );
-      const getPokemonDescriptions: SpeciesInfo[] = await Promise.map(
+      const pokemonDescriptions: SpeciesInfo[] = await Promise.map(
         pokemonDetails,
         async (item: PokemonDetails) => (await fetch(item.species.url)).json(),
-        { concurrency: 5 }
+        { concurrency: 12 }
       );
       let full: PokemonDetails[] = pokemonDetails
         .map((p, index) => ({
           ...p,
-          speciesInfo: getPokemonDescriptions[index],
-          dex: getPokemonDescriptions[index].id,
+          speciesInfo: pokemonDescriptions[index],
+          dex: pokemonDescriptions[index].id,
         }))
         .filter((p) => p.name.includes("-mega") !== true)
         .filter((p) => p.name.includes("-totem-alola") !== true)
@@ -49,7 +62,7 @@ export default function App() {
         .filter((p) => p.name.includes("-starter") !== true)
         .filter((p) => p.name.includes("-gmax") !== true);
 
-      setfirstGenPokemonDetails((prevState) =>
+      setPokemonDetails((prevState) =>
         prevState ? [...prevState, ...full] : [...full]
       );
       setFiltered((prevState) =>
@@ -57,13 +70,35 @@ export default function App() {
       );
       setCurrentOffset((prevState) => prevState + POKEMON_LIMIT);
     };
-    fetchFirstGenPokemons();
+    //   // const fetchDesc = async () => {
+    //   //   pokemonDetails
+    //   //     ? pokemonDetails.map(async (p) => {
+    //   //         const spec = await fetch(p.species.url);
+    //   //         const speci: SpeciesInfo = await spec.json();
+    //   //         p.speciesInfo = speci;
+    //   //         let full: PokemonDetails[] = pokemonDetails.map((p, index) => ({
+    //   //           ...p,
+    //   //           speciesInfo: speci,
+    //   //           dex: speci.id,
+    //   //         }));
+    //   //         setPokemonDetails((prevState) =>
+    //   //           prevState ? [...prevState, ...full] : [...full]
+    //   //         );
+    //   //         setFiltered((prevState) =>
+    //   //           prevState ? [...prevState, ...full] : [...full]
+    //   //         );
+    //   //       })
+    //   //     : "";
+    //   // };
+
+    fetchPokemon();
+    // fetchDesc();
   }, [currentOffset]);
 
   const handleSearch = (text: string) => {
     let filter: PokemonDetails[] = [];
-    firstGenPokemonDetails &&
-      firstGenPokemonDetails.map((p) => {
+    pokemonDetails &&
+      pokemonDetails.map((p) => {
         if (text !== "") {
           (p.name.toLowerCase().startsWith(text.toLowerCase()) &&
             filter.push(p)) ||
@@ -74,7 +109,7 @@ export default function App() {
             (p.id.toString() === text && filter.push(p));
           setFiltered(filter);
         } else {
-          setFiltered(firstGenPokemonDetails);
+          setFiltered(pokemonDetails);
         }
       });
     setSearchQuery(text);
