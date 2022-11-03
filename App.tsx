@@ -15,19 +15,6 @@ export default function App() {
   const [currentOffset, setCurrentOffset] = useState(0);
   const [offset, setOffset] = useState(0);
 
-  // useEffect(() => {
-  //   if (currentOffset > 1100) {
-  //     return;
-  //   }
-  //   let full: PokemonDetails[] = [];
-  //   const data = fetchPoke(offset);
-  //   data.map((d) => {
-  //     full.push(d);
-  //   });
-  //   console.log(full[0]);
-  //   setOffset((prevState) => prevState + POKEMON_LIMIT);
-  // }, [currentOffset]);
-
   useEffect(() => {
     if (currentOffset > 1100) {
       setLoading(false);
@@ -39,22 +26,9 @@ export default function App() {
         `https://pokeapi.co/api/v2/pokemon?limit=${POKEMON_LIMIT}&offset=${currentOffset}`
       );
       const pokeJSON: Pokemon = await pokemonResponse.json();
-      const pokemonDetails: PokemonDetails[] = await Promise.map(
-        pokeJSON.results,
-        async (f: PokemonURLS) => (await fetch(f.url)).json(),
-        { concurrency: 12 }
-      );
-      const pokemonDescriptions: SpeciesInfo[] = await Promise.map(
-        pokemonDetails,
-        async (item: PokemonDetails) => (await fetch(item.species.url)).json(),
-        { concurrency: 12 }
-      );
-      let full: PokemonDetails[] = pokemonDetails
-        .map((p, index) => ({
-          ...p,
-          speciesInfo: pokemonDescriptions[index],
-          dex: pokemonDescriptions[index].id,
-        }))
+      const pokemonDetails: PokemonDetails[] = await Promise.all(
+        pokeJSON.results.map(async (f) => await (await fetch(f.url)).json())
+      )
         .filter((p) => p.name.includes("-mega") !== true)
         .filter((p) => p.name.includes("-totem-alola") !== true)
         .filter((p) => p.name.includes("pikachu-") !== true)
@@ -63,36 +37,14 @@ export default function App() {
         .filter((p) => p.name.includes("-gmax") !== true);
 
       setPokemonDetails((prevState) =>
-        prevState ? [...prevState, ...full] : [...full]
+        prevState ? [...prevState, ...pokemonDetails] : [...pokemonDetails]
       );
       setFiltered((prevState) =>
-        prevState ? [...prevState, ...full] : [...full]
+        prevState ? [...prevState, ...pokemonDetails] : [...pokemonDetails]
       );
       setCurrentOffset((prevState) => prevState + POKEMON_LIMIT);
     };
-    //   // const fetchDesc = async () => {
-    //   //   pokemonDetails
-    //   //     ? pokemonDetails.map(async (p) => {
-    //   //         const spec = await fetch(p.species.url);
-    //   //         const speci: SpeciesInfo = await spec.json();
-    //   //         p.speciesInfo = speci;
-    //   //         let full: PokemonDetails[] = pokemonDetails.map((p, index) => ({
-    //   //           ...p,
-    //   //           speciesInfo: speci,
-    //   //           dex: speci.id,
-    //   //         }));
-    //   //         setPokemonDetails((prevState) =>
-    //   //           prevState ? [...prevState, ...full] : [...full]
-    //   //         );
-    //   //         setFiltered((prevState) =>
-    //   //           prevState ? [...prevState, ...full] : [...full]
-    //   //         );
-    //   //       })
-    //   //     : "";
-    //   // };
-
     fetchPokemon();
-    // fetchDesc();
   }, [currentOffset]);
 
   const handleSearch = (text: string) => {
@@ -117,7 +69,6 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>PokeDex</Text>
-      {/* <SearchBox searchQuery={searchQuery} setSearchQuery={setSearchQuery} /> */}
       {loading ? (
         <View>
           <Text style={styles.loading}>
@@ -148,7 +99,9 @@ export default function App() {
       <FlatList
         initialNumToRender={12}
         refreshing={loading}
-        data={filtered?.sort((a, b) => a.speciesInfo.id - b.speciesInfo.id)}
+        data={filtered?.sort((a, b) =>
+          a.order !== -1 ? a.order - b.order : 1000
+        )}
         renderItem={({ item }) => (
           <PokemonContainer key={item.name} {...item} />
         )}

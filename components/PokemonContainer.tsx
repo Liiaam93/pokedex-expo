@@ -8,7 +8,7 @@ import {
   Modal,
 } from "react-native";
 import { PokemonDetails } from "../types";
-import { LinearGradient } from "expo-linear-gradient";
+// import { LinearGradient } from "expo-linear-gradient";
 import PokeModal from "./PokeModal";
 
 const colors = {
@@ -204,7 +204,8 @@ const PokemonContainer = (item: PokemonDetails) => {
 
   return (
     <TouchableOpacity key={item.id} onPress={handlePress}>
-      <LinearGradient
+      <View style={[styles.pokemonContainer, { backgroundColor: "grey" }]}>
+        {/* <LinearGradient
         end={{ x: 0.8, y: 0.5 }}
         start={{ x: 0.2, y: 0.5 }}
         colors={[
@@ -216,12 +217,25 @@ const PokemonContainer = (item: PokemonDetails) => {
           styles.pokemonContainer,
           { backgroundColor: item.speciesInfo.color.name },
         ]}
-      >
+      > */}
         <View style={styles.pokemonTitle}>
           <Text style={styles.dex}>
-            #{item.speciesInfo.id < 10 && "0"}
-            {item.speciesInfo.id < 100 && "0"}
-            {item.speciesInfo.id}
+            #
+            {parseInt(
+              item.species.url
+                .replace("https://pokeapi.co/api/v2/pokemon-species/", "")
+                .replace("/", "")
+            ) < 10 && "0"}
+            {parseInt(
+              item.species.url
+                .replace("https://pokeapi.co/api/v2/pokemon-species/", "")
+                .replace("/", "")
+            ) < 100 && "0"}
+            {parseInt(
+              item.species.url
+                .replace("https://pokeapi.co/api/v2/pokemon-species/", "")
+                .replace("/", "")
+            )}
           </Text>
           <Text style={styles.pokemonName}>
             {item.name.charAt(0).toUpperCase() +
@@ -270,7 +284,8 @@ const PokemonContainer = (item: PokemonDetails) => {
             }}
           />
         </TouchableOpacity>
-      </LinearGradient>
+        {/* </LinearGradient> */}
+      </View>
 
       <Modal
         animationType="slide"
